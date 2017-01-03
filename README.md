@@ -1,3 +1,3 @@
-# rrg-schema-test
+# schema-dnd-test
 
 Testing
