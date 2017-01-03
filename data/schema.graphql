@@ -1,0 +1,128 @@
+# A person who uses our app
+type Bucket implements Node {
+  # The ID of an object
+  id: ID!
+
+  # A bucket's collections
+  collections(after: String, first: Int, before: String, last: Int): CollectionConnection
+}
+
+# A connection to a list of items.
+type CollectionConnection {
+  # Information to aid in pagination.
+  pageInfo: PageInfo!
+
+  # A list of edges.
+  edges: [CollectionEdge]
+}
+
+# An edge in a connection.
+type CollectionEdge {
+  # The item at the end of the edge
+  node: Collections
+
+  # A cursor for use in pagination
+  cursor: String!
+}
+
+# A user collections
+type Collections implements Node {
+  # The ID of an object
+  id: ID!
+
+  # Collection - Form Title
+  title: String
+
+  # Collection - Form
+  form: String
+
+  # Collection - Form Schema
+  fschema: String
+
+  # Collection - Form Model
+  model: String
+}
+
+input InsertCollectionInput {
+  title: String!
+  clientMutationId: String
+}
+
+type InsertCollectionPayload {
+  collection: Collections
+  clientMutationId: String
+}
+
+type Mutation {
+  insertCollection(input: InsertCollectionInput!): InsertCollectionPayload
+}
+
+# An object with an ID
+interface Node {
+  # The id of the object.
+  id: ID!
+}
+
+# Information about pagination in a connection.
+type PageInfo {
+  # When paginating forwards, are there more items?
+  hasNextPage: Boolean!
+
+  # When paginating backwards, are there more items?
+  hasPreviousPage: Boolean!
+
+  # When paginating backwards, the cursor to continue.
+  startCursor: String
+
+  # When paginating forwards, the cursor to continue.
+  endCursor: String
+}
+
+type Query {
+  # Fetches an object given its ID
+  node(
+    # The ID of an object
+    id: ID!
+  ): Node
+  bucket: Bucket
+  viewer: User
+}
+
+# A person who uses our app
+type User implements Node {
+  # The ID of an object
+  id: ID!
+
+  # A person's collection of widgets
+  widgets(after: String, first: Int, before: String, last: Int): WidgetConnection
+
+  # A person's collections
+  collections(status: String = "any", after: String, first: Int, before: String, last: Int): CollectionConnection
+}
+
+# A shiny widget
+type Widget implements Node {
+  # The ID of an object
+  id: ID!
+
+  # The name of the widget
+  name: String
+}
+
+# A connection to a list of items.
+type WidgetConnection {
+  # Information to aid in pagination.
+  pageInfo: PageInfo!
+
+  # A list of edges.
+  edges: [WidgetEdge]
+}
+
+# An edge in a connection.
+type WidgetEdge {
+  # The item at the end of the edge
+  node: Widget
+
+  # A cursor for use in pagination
+  cursor: String!
+}
