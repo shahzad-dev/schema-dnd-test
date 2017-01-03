@@ -1,8 +1,8 @@
 {
-  "name": "rrg-schema-test",
+  "name": "schema-dnd-test",
   "private": true,
-  "description": "A quick way to test rrg schema.",
-  "repository": "shahzad-dev/rrg-schema-test",
+  "description": "A quick way to test schema dnd.",
+  "repository": "shahzad-dev/schema-dnd-test",
   "version": "0.0.1",
   "scripts": {
     "start": "babel-node ./server.js",
