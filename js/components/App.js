@@ -20,51 +20,72 @@ import IconButton from 'material-ui/IconButton';
 import TextField from 'material-ui/TextField';
 import SelectField from 'material-ui/SelectField';
 import Checkbox from 'material-ui/Checkbox';
+import {RadioButton, RadioButtonGroup} from 'material-ui/RadioButton';
 
 import {grey400, darkBlack, lightBlack} from 'material-ui/styles/colors';
 
 import ContentAdd from 'material-ui/svg-icons/content/add';
 import ActionReorder from 'material-ui/svg-icons/action/reorder';
+import ActionSwapVerticalCircle from 'material-ui/svg-icons/action/swap-vertical-circle';
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 class FieldDialog extends Component {
     static defaultProps = {
-        label: "",
-        multiLine: false,
-        optionType: "",
-        options: [],
-        fieldType: "input-field",
+        fieldProps: {
+            fieldType: "input-field",
+            fid: null,
+            label: "",
+            multiLine: false,
+            optionType: "",
+            options: [],
+        },
         dialogOpen: false,
     }
 
     static propTypes = {
-        fieldType: React.PropTypes.string.isRequired,
-        dialogOpen: React.PropTypes.bool.isRequired,
     }
 
     state = {
-        label: "No Title",
+        fieldType: "input-field",
+        fid: null,
+        label: "",
         multiLine: false,
         optionType: "",
-        options: ["Option 1"]
+        options: [],
     };
 
-    submitValue = () => {
-        this.props.addField({...this.state});
-
-        //Initialize again after submit
+    resetValues() {
         this.setState({
-            label: "No Title",
+            fieldType: "input-field",
+            fid: null,
+            label: "",
             multiLine: false,
             optionType: "",
-            options: ["Option 1"]
+            options: [],
         });
     }
+
+    submitValue = () => {
+        //Pass back to parent with submit values
+        this.props.addField(this.state);
+        this.resetValues();
+    }
+    componentWillReceiveProps(nextProps) {
+        console.log("Received Props", nextProps, this.state);
+        if( nextProps.dialogOpen ) {
+            console.log("Initialize");
+            this.setState({ ...this.state, ...nextProps.fieldProps});
+            console.log("State: ", this.state);
+        } else {
+            console.log("Reset");
+            this.resetValues();
+        }
+    }
     render() {
-        const fi = (fields, fieldType) => this.props.fieldType === fieldType ? fields : null;
+        const fi = (fields, fieldType) => this.props.fieldProps.fieldType === fieldType ? fields : null;
         const actions = [<FlatButton label = "Cancel" primary = {true} onTouchTap = {this.props.handleClose} />,
                         <FlatButton label = "Submit" primary = {true} keyboardFocused={true} onTouchTap = {this.submitValue} />];
-
+        let options =  this.state.options ? this.state.options : [];
         let updateOptions = (newValue, index) => {
             let temp = this.state.options;
             temp[index] = newValue;
@@ -79,17 +100,17 @@ class FieldDialog extends Component {
                     open={this.props.dialogOpen}
                     onRequestClose={this.handleClose}>
 
-                <TextField defaultValue={this.props.label}
+                <TextField defaultValue={this.state.label}
                             floatingLabelText="Label"
                             onChange={(event, newValue) => this.setState({label: newValue}) }/>&nbsp;&nbsp;&nbsp;
                 { fi(<TextField defaultValue="" floatingLabelText="Example Value"/>, "input-field") }
                 <Checkbox label="Required"/>
                 { fi(<Checkbox label="Multiple Lines"
-                                checked={this.props.multiLine}
+                                defaultChecked={this.props.fieldProps.multiLine}
                                 onCheck={(event, isInputChecked) => this.setState({multiLine: isInputChecked}) }/>, "input-field") }
                 { fi(<SelectField
                           floatingLabelText="Options Type"
-                          value={this.props.optionType}
+                          value={this.state.optionType}
                           onChange={(event, key, payload) => this.setState({optionType: payload}) }
                         >
                           <MenuItem value="select" primaryText="Select" />
@@ -98,7 +119,7 @@ class FieldDialog extends Component {
                       </SelectField>, "options-field") }
                 { fi(
                 <div>
-                    { this.state.options.map((option, i) =>
+                    {options.map((option, i) =>
                         <span key={i}>
                             <TextField
                                     defaultValue={option}
@@ -116,13 +137,21 @@ class FieldDialog extends Component {
     }
 }
 
-const DragHandle = SortableHandle(() => <ActionReorder color={grey400} />); // This can be any component you want
+const DragHandle = SortableHandle(() => <ActionSwapVerticalCircle color={grey400} />); // This can be any component you want
 
 const DisplayField = ({index, fieldProps}) => {
-    if( fieldProps.optionType !== "" ) {
+    if( fieldProps.fieldType === "options-field" && fieldProps.optionType === "select") {
         return (<SelectField floatingLabelText={fieldProps.label}>
              { fieldProps.options.map((option, i) => <MenuItem key={i} value={i} primaryText={option} />) }
          </SelectField>);
+    } else if( fieldProps.fieldType === "options-field" && fieldProps.optionType === "checkbox" ) {
+        return (<div>
+             { fieldProps.options.map((option, i) => <Checkbox key={i} label={option} />) }
+         </div>);
+    } else if( fieldProps.fieldType === "options-field" && fieldProps.optionType === "radio" ) {
+        return (<RadioButtonGroup name={fieldProps.label.toLowerCase()}>
+             { fieldProps.options.map((option, i) => <RadioButton key={i} value={i} label={option} />) }
+         </RadioButtonGroup>);
     } else {
         return (<TextField defaultValue="" floatingLabelText={fieldProps.label} multiLine={fieldProps.multiLine}/>);
     }
@@ -135,22 +164,26 @@ const SortableItem = SortableElement(({index, value, handleOpen}) => {
         </IconButton>
     );
 
-    const dialogOpen = (event) => handleOpen(event, "input-field");
+    const dialogOpen = (event) => handleOpen(event, value);
 
-    const rightIconMenu = (
-        <IconMenu iconButtonElement={iconButtonElement}>
-            <MenuItem onTouchTap={dialogOpen}>Edit</MenuItem>
-            <MenuItem>Delete</MenuItem>
-        </IconMenu>
-    );
+    const rightIconMenu = (<IconMenu iconButtonElement={iconButtonElement}>
+                                <MenuItem onTouchTap={dialogOpen}>Edit</MenuItem>
+                                <MenuItem>Delete</MenuItem>
+                            </IconMenu>);
 
     return (
             <ListItem key={index}
                     rightIconButton={rightIconMenu}
                     disabled={true}
                     style={{ border: "1px solid #E0E0E0", margin: "10px 0"}}>
-                    <DragHandle /> &nbsp;&nbsp;
-                    <DisplayField fieldProps={value} index={index}/>
+                    <div style={{ display: "inline-block", width: "100%"}}>
+                        <div style={{float:"left", width: "5%", margin: "2% auto"}}>
+                            <DragHandle /> &nbsp;&nbsp;
+                        </div>
+                        <div style={{"float":"left", width: "95%"}}>
+                            <DisplayField fieldProps={value} index={index}/>
+                        </div>
+                    </div>
             </ListItem>
     );
 });
@@ -168,14 +201,9 @@ const SortableList = SortableContainer(({items, handleOpen}) => {
 class App extends Component {
     state = {
         dialogOpen: false,
-        fieldProps: {
-                    fieldType: "input-field",
-                    label: "",
-                    multiLine: false,
-                    optionType: "",
-                    options: []
-                },
+        fieldProps: {},
         fields: [],
+
         form: ["*"],
         schema: {
             "type": "object",
@@ -207,16 +235,34 @@ class App extends Component {
     //this.setState({ schema.properties["new_fild"]: {} });
 
     addField = (fieldProps) => {
-        this.state.fields.push({...this.state.fieldProps, ...fieldProps});
+        console.log("Add Fields", fieldProps);
+
+        if( this.state.fieldProps.fid > -1 ) {
+            let temp = this.state.fields;
+            temp[this.state.fieldProps.fid] = {...this.state.fieldProps, ...fieldProps};
+            this.setState({fields: temp});
+        } else {
+            let fid = this.state.fields.length;
+            console.log(this.state.fieldProps);
+            this.state.fields.push({...this.state.fieldProps, ...fieldProps, fid});
+        }
         console.log("Fields:", this.state.fields);
-        this.setState({ fieldProps })
         this.handleClose();
     };
     handleClose = () => {
-        this.setState({dialogOpen: false});
+        this.setState({fieldProps: {}, dialogOpen: false});
     };
     handleOpen = (event, child) => {
-        this.setState({fieldProps: {fieldType: child.ref}, dialogOpen: true});
+        if( child.ref ) {
+            //new mode
+            this.setState({fieldProps: {fieldType: child.ref}, dialogOpen: true});
+            console.log("Parent State", this.state);
+        } else {
+            //merge field id and other props
+            //edit mode
+            this.setState({fieldProps: child, dialogOpen: true});
+        }
+        // console.log(this.state.fieldProps);
     };
     onSortEnd = ({oldIndex, newIndex}) => {
         this.setState({
@@ -233,7 +279,7 @@ class App extends Component {
                             dialogOpen={this.state.dialogOpen}
                             addField={this.addField}
                             handleClose={this.handleClose}
-                            {...this.state.fieldProps}
+                            fieldProps={this.state.fieldProps}
                         />
 
                 <IconMenu iconButtonElement={<FloatingActionButton mini={true} secondary={true}><ContentAdd/></FloatingActionButton>}
