@@ -71,13 +71,13 @@ class FieldDialog extends Component {
         this.resetValues();
     }
     componentWillReceiveProps(nextProps) {
-        console.log("Received Props", nextProps, this.state);
+        // console.log("Received Props", nextProps, this.state);
         if( nextProps.dialogOpen ) {
-            console.log("Initialize");
+            // console.log("Initialize");
             this.setState({ ...this.state, ...nextProps.fieldProps});
-            console.log("State: ", this.state);
+            // console.log("State: ", this.state);
         } else {
-            console.log("Reset");
+            // console.log("Reset");
             this.resetValues();
         }
     }
@@ -146,12 +146,15 @@ const DisplayField = ({index, fieldProps}) => {
          </SelectField>);
     } else if( fieldProps.fieldType === "options-field" && fieldProps.optionType === "checkbox" ) {
         return (<div>
+            <Subheader>{fieldProps.label}</Subheader>
              { fieldProps.options.map((option, i) => <Checkbox key={i} label={option} />) }
          </div>);
     } else if( fieldProps.fieldType === "options-field" && fieldProps.optionType === "radio" ) {
-        return (<RadioButtonGroup name={fieldProps.label.toLowerCase()}>
+        return (<div>
+         <Subheader>{fieldProps.label}</Subheader>
+         <RadioButtonGroup name={fieldProps.label.toLowerCase()}>
              { fieldProps.options.map((option, i) => <RadioButton key={i} value={i} label={option} />) }
-         </RadioButtonGroup>);
+         </RadioButtonGroup></div>);
     } else {
         return (<TextField defaultValue="" floatingLabelText={fieldProps.label} multiLine={fieldProps.multiLine}/>);
     }
@@ -235,7 +238,7 @@ class App extends Component {
     //this.setState({ schema.properties["new_fild"]: {} });
 
     addField = (fieldProps) => {
-        console.log("Add Fields", fieldProps);
+        // console.log("Add Fields", fieldProps);
 
         if( this.state.fieldProps.fid > -1 ) {
             let temp = this.state.fields;
@@ -243,10 +246,10 @@ class App extends Component {
             this.setState({fields: temp});
         } else {
             let fid = this.state.fields.length;
-            console.log(this.state.fieldProps);
+            // console.log(this.state.fieldProps);
             this.state.fields.push({...this.state.fieldProps, ...fieldProps, fid});
         }
-        console.log("Fields:", this.state.fields);
+        // console.log("Fields:", this.state.fields);
         this.handleClose();
     };
     handleClose = () => {
@@ -256,7 +259,7 @@ class App extends Component {
         if( child.ref ) {
             //new mode
             this.setState({fieldProps: {fieldType: child.ref}, dialogOpen: true});
-            console.log("Parent State", this.state);
+            // console.log("Parent State", this.state);
         } else {
             //merge field id and other props
             //edit mode
